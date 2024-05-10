@@ -24,10 +24,10 @@ namespace WpfApp1
         List<string> helyFoglalas = new List<string>();
         List<string> lyukakHelye = new List<string>();
         Random random = new Random();
-        const int MEGADOTTLYUKAKSZAMA = 50;
-        const int LEPOKSZAMA = 20;
+        const int MEGADOTTLYUKAKSZAMA = 10;
+        const int LEPOKSZAMA = 50;
         const int OSZLOPOK = 25;
-        const int SOROK = 10;
+        const int SOROK = 25;
         public MainWindow()
         {
             InitializeComponent();
@@ -97,7 +97,24 @@ namespace WpfApp1
             {
                 if (item is Label)
                 {
+                    Label elem = item as Label;
+                    int[] koordinatak = { Grid.GetColumn(elem), Grid.GetRow(elem) };
+                    int[] kivalasztottKoordinatak = { Grid.GetColumn(elem), Grid.GetRow(elem) };
+                    int? cserelendoIndexMezok, cserelendoIndexHely;
+                    for (int i = 0; i < helyFoglalas.Count; i++)
+                    {
+                        if (helyFoglalas[i] == $"{koordinatak[0]};{koordinatak[1]}")
+                        {
+                            cserelendoIndexHely = i;
+                            break;
+                        }
+                    }
+                    if ()
+                    {
+
+                    }
                     
+
                 }
             }
             
