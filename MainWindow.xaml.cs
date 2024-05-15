@@ -20,12 +20,11 @@ namespace WpfApp1
     /// </summary>
     public partial class MainWindow : Window
     {
-        List<string> jomezokLista = new List<string>();
-        List<string> helyFoglalas = new List<string>();
-        List<string> lyukakHelye = new List<string>();
+        List<Mezo> mezokLista = new List<Mezo>();
+        List<Babu> babukLista = new List<Babu>();
         Random random = new Random();
         const int MEGADOTTLYUKAKSZAMA = 10;
-        const int LEPOKSZAMA = 50;
+        const int BABUKSZAMA = 50;
         const int OSZLOPOK = 25;
         const int SOROK = 25;
         public MainWindow()
@@ -44,7 +43,7 @@ namespace WpfApp1
             {
                 for (int j = 0; j < SOROK; j++)
                 {
-                    jomezokLista.Add($"{i};{j}");
+                    mezokLista.Add(new Mezo(new Point(i, j)));
                     Label label = new();
                     label.Content = $"{i + 1};{j + 1}";
                     label.Foreground = new SolidColorBrush(Color.FromRgb(255, 255, 255));
@@ -55,67 +54,130 @@ namespace WpfApp1
                     grdAlap.Children.Add(label);
                 }
             }
-            int eredetiMeret = jomezokLista.Count;
-            while (jomezokLista.Count > eredetiMeret - MEGADOTTLYUKAKSZAMA)
+            int eredetiMeret = mezokLista.Count;
+            List<Mezo> masolatMezo = new List<Mezo>();
+            foreach (var item in mezokLista)
             {
-                int kivalasztottIndex = random.Next(0, jomezokLista.Count);
-                string kivalasztott = jomezokLista[kivalasztottIndex];
-                lyukakHelye.Add(kivalasztott);
-                string[] bontott = kivalasztott.Split(";");
+                masolatMezo.Add(item);
+            }
+            while (masolatMezo.Count > eredetiMeret - MEGADOTTLYUKAKSZAMA)
+            {
+                int kivalasztottIndex = random.Next(0, masolatMezo.Count);
+                Mezo kivalasztott = masolatMezo[kivalasztottIndex];
                 Ellipse ellipse = new Ellipse();
-                Grid.SetColumn(ellipse, int.Parse(bontott[0]));
-                Grid.SetRow(ellipse, int.Parse(bontott[1]));
+                Grid.SetColumn(ellipse, int.Parse(kivalasztott.Koordinata.X.ToString()));
+                Grid.SetRow(ellipse, int.Parse(kivalasztott.Koordinata.Y.ToString()));
                 ellipse.Fill = new SolidColorBrush(Color.FromRgb(190, 50, 10));
                 ellipse.Width = 20;
                 ellipse.Height = 20;
                 ellipse.Opacity = 0.7;
                 grdAlap.Children.Add(ellipse);
-                jomezokLista.RemoveAt(kivalasztottIndex);
+                mezokLista[kivalasztottIndex].MegmaradtLepesek = 0;
+                masolatMezo.RemoveAt(kivalasztottIndex);
             }
-            eredetiMeret = jomezokLista.Count;
-            while (jomezokLista.Count > eredetiMeret - LEPOKSZAMA)
+            eredetiMeret = masolatMezo.Count;
+            while (masolatMezo.Count > eredetiMeret - BABUKSZAMA)
             {
-                int kivalasztottIndex = random.Next(0, jomezokLista.Count);
-                string kivalasztott = jomezokLista[kivalasztottIndex];
-                helyFoglalas.Add(kivalasztott);
-                string[] bontott = kivalasztott.Split(";");
+                int kivalasztottIndex = random.Next(0, masolatMezo.Count);
+                Mezo kivalasztott = masolatMezo[kivalasztottIndex];
+                babukLista.Add(new Babu(kivalasztott.Koordinata));
                 Rectangle rectangle = new Rectangle();
-                Grid.SetColumn(rectangle, int.Parse(bontott[0]));
-                Grid.SetRow(rectangle, int.Parse(bontott[1]));
+                Grid.SetColumn(rectangle, int.Parse(kivalasztott.Koordinata.X.ToString()));
+                Grid.SetRow(rectangle, int.Parse(kivalasztott.Koordinata.Y.ToString()));
                 rectangle.Fill = new SolidColorBrush(Color.FromRgb(130, 130, 20));
                 rectangle.Opacity = 0.9;
                 grdAlap.Children.Add(rectangle);
-                jomezokLista.RemoveAt(kivalasztottIndex);
+                masolatMezo.RemoveAt(kivalasztottIndex);
             }
-            
         }
+        private LepesSiker BabuLeptetes(Babu babu, List<Point> koordinatak)
+        {
+            bool sikeres = false;
+            Point point = babu.Koordinata;
+            switch (random.Next(0, 2)) // koordináta
+            {
+                case 0: // x
+                    switch (random.Next(0, 2))
+                    {
+                        case 0: // -1
+                            point.X -= 1;
+                            break;
+                        case 1: // +1
+                            point.X += 1;
+                            break;
+                    }
+                    break;
 
+                case 1: // y
+                    switch (random.Next(0, 2))
+                    {
+                        case 0: // -1
+                            point.Y -= 1;
+                            break;
+                        case 1: // +1
+                            point.Y += 1;
+                            break;
+                    }
+                    break;
+            }
+            if (!koordinatak.Contains(point))
+            {
+                sikeres = true;
+                babu.Lep(point);
+            }
+            return new LepesSiker(sikeres, point);
+        }
         private void Button_Click(object sender, RoutedEventArgs e)
         {
             List<int> indexek = new List<int>();
-            foreach (var item in grdAlap.Children)
+            foreach (Babu babu in babukLista)
             {
-                if (item is Label)
+                List<Point> koordinatak = new List<Point>();
+                foreach (Babu item in babukLista)
                 {
-                    Label elem = item as Label;
-                    int[] koordinatak = { Grid.GetColumn(elem), Grid.GetRow(elem) };
-                    int[] kivalasztottKoordinatak = { Grid.GetColumn(elem), Grid.GetRow(elem) };
-                    int? cserelendoIndexMezok, cserelendoIndexHely;
-                    for (int i = 0; i < helyFoglalas.Count; i++)
+                    if (item.Koordinata.X != babu.Koordinata.X || item.Koordinata.Y != babu.Koordinata.Y)
                     {
-                        if (helyFoglalas[i] == $"{koordinatak[0]};{koordinatak[1]}")
+                        koordinatak.Add(item.Koordinata);
+                    }
+                }
+                List <LepesSiker> probalkozott = new List<LepesSiker>();
+                bool kilephet = false;
+                while (probalkozott.Count < 4 && !kilephet)
+                {
+                    LepesSiker probalt = BabuLeptetes(babu, koordinatak);
+                    kilephet = probalt.Sikeres;
+                    if (!kilephet)
+                    {
+                        bool talalt = false;
+                        foreach (LepesSiker marvolt in probalkozott)
                         {
-                            cserelendoIndexHely = i;
-                            break;
+                            if (marvolt.Probalt.X == probalt.Probalt.X && marvolt.Probalt.Y == probalt.Probalt.Y)
+                            {
+                                talalt = true;
+                            }
+                        }
+                        if (!talalt)
+                        {
+                            probalkozott.Add(probalt);
                         }
                     }
-                    if ()
-                    {
-
-                    }
-                    
-
                 }
+
+                Mezo kivalasztottMezo = mezokLista.Where(m => m.Koordinata.X == babu.Koordinata.X && m.Koordinata.Y == babu.Koordinata.Y).First();
+                if (kivalasztottMezo != null && !kivalasztottMezo.LehetLepni)
+                {
+                    int kapottIndex = babukLista.FindIndex(b => b.Koordinata.X == babu.Koordinata.X && b.Koordinata.Y == babu.Koordinata.Y);
+                    if (kapottIndex > -1)
+                    {
+                        indexek.Add(kapottIndex);
+                    }
+                }
+            }
+            
+            foreach (int index in indexek)
+            {
+                MessageBox.Show($"Lékre lépett: {babukLista[index].Koordinata.X};{babukLista[index].Koordinata.Y} | {index}");
+                babukLista.RemoveAt(index);
             }
             
         }
